@@ -1,0 +1,4 @@
+struct Event
+{
+    unsigned signal;
+};
