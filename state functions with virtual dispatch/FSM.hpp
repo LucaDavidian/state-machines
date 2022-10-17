@@ -2,7 +2,11 @@
 #define FSM_H
 
 #include "state.hpp"
-#include "event.hpp"
+
+struct Event
+{
+    unsigned signal;
+};
 
 class FSM
 {
@@ -13,7 +17,18 @@ public:
 protected:
     FSM() = default;
     void Init(State initialPseudoState) { mState = initialPseudoState; (*mState)(Event{0}); }  // initial pseudostate transistions to initial state
-    void SetState(State state);
+    void SetState(State state) 
+    { 
+        if (mState != state)
+        {
+            (*mState)(Event{2}); 
+
+            mState = state; 
+
+            (*mState)(Event{1});
+        }
+    }
+
 private:
     State mState;
 };
