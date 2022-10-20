@@ -1,9 +1,9 @@
-#include "testHSM.hpp"
+#include "HSM.hpp"
 #include <cstdlib>
 
 int main(int argc, char *argv[])
 {
-    TestHSM hsm;
+    HSM hsm;
     hsm.Init();
 
 	while (std::cin)

@@ -2,6 +2,29 @@
 #include <vector>
 
 TopState HSM::sTopState;
+Initial HSM::initial;
+S HSM::s;
+S1 HSM::s1;
+S11 HSM::s11;
+S2 HSM::s2;
+S21 HSM::s21;
+S211 HSM::s211;
+
+HSM::HSM()
+{
+    s11.SetParent(&s1);
+    s1.SetParent(&s);
+    s1.SetInitial(&s11);
+    s211.SetParent(&s21);
+    s21.SetParent(&s2);
+    s21.SetInitial(&s211);
+    s2.SetParent(&s);
+    s2.SetInitial(&s211);
+    s.SetParent(&sTopState);
+    s.SetInitial(&s11);
+
+    mCurrentState = &initial;
+}
 
 void HSM::Init(const Event *event)
 {
@@ -123,4 +146,154 @@ void HSM::Dispatch(const Event *event)
             initialSource = initialTarget;
         }
     }
+}
+
+Ret Initial::OnEvent(HSM *context, const Event *event) const 
+{
+    (void)event;
+    context->mFoo = 0;
+    context->ChangeState(&HSM::s2);
+
+    return Ret::TRANSITION;
+}
+
+Ret S::OnEvent(HSM *context, const Event *event) const 
+{
+    switch (event->sig)
+    {
+        case Signal::I:
+            if (context->mFoo)
+            {
+                context->mFoo = 0;
+                return Ret::HANDLED;
+            }
+            break;
+
+        case Signal::E:
+            context->ChangeState(&HSM::s11);
+            return Ret::TRANSITION;           
+    }
+    
+    return Ret::IGNORED; 
+}
+
+Ret S1::OnEvent(HSM *context, const Event *event) const 
+{
+    switch (event->sig)
+    {
+        case Signal::A:
+            context->ChangeState(&HSM::s1);
+            return Ret::TRANSITION;
+
+        case Signal::B:
+            context->ChangeState(&HSM::s11);
+            return Ret::TRANSITION;
+
+        case Signal::C:
+            context->ChangeState(&HSM::s2);
+            return Ret::TRANSITION;
+
+        case Signal::D:
+            if (!context->mFoo)
+            {   
+                context->mFoo = 1;
+                context->ChangeState(&HSM::s);
+                return Ret::TRANSITION;
+            }
+            break;
+
+        case Signal::F:
+            context->ChangeState(&HSM::s211);
+            return Ret::TRANSITION;
+        
+        case Signal::I:
+            return Ret::HANDLED;         
+    }
+    
+    return Ret::IGNORED;  
+}
+
+Ret S11::OnEvent(HSM *context, const Event *event) const 
+{
+    switch (event->sig)
+    {
+        case Signal::D:
+            if (context->mFoo)
+            {
+                context->mFoo = 0;
+                context->ChangeState(&HSM::s1);
+                return Ret::TRANSITION;
+            }
+            break;
+
+        case Signal::G:
+            context->ChangeState(&HSM::s211);
+            return Ret::TRANSITION;
+
+        case Signal::H:
+            context->ChangeState(&HSM::s);
+            return Ret::TRANSITION;
+    }
+
+    return Ret::IGNORED;
+}
+
+Ret S2::OnEvent(HSM *context, const Event *event) const 
+{
+    switch (event->sig)
+    {
+        case Signal::C:
+            context->ChangeState(&HSM::s1);
+            return Ret::TRANSITION;
+
+        case Signal::F:
+            context->ChangeState(&HSM::s11);
+            return Ret::TRANSITION;
+
+		case Signal::I:
+			if (!context->mFoo)
+			{
+				context->mFoo = 1;
+				return Ret::HANDLED;
+			}
+			break;
+    }
+
+    return Ret::IGNORED;
+}
+
+Ret S21::OnEvent(HSM *context, const Event *event) const 
+{
+    switch (event->sig)
+    {   
+        case Signal::A:
+            context->ChangeState(&HSM::s21);
+            return Ret::TRANSITION;
+
+        case Signal::B:
+            context->ChangeState(&HSM::s211);
+            return Ret::TRANSITION;
+
+        case Signal::G:
+            context->ChangeState(&HSM::s11);
+            return Ret::TRANSITION;
+    }
+
+    return Ret::IGNORED;
+}
+
+Ret S211::OnEvent(HSM *context, const Event *event) const 
+{
+    switch (event->sig)
+    {   
+        case Signal::D:
+            context->ChangeState(&HSM::s21);
+            return Ret::TRANSITION;
+
+        case Signal::H:
+            context->ChangeState(&HSM::s);
+            return Ret::TRANSITION;
+    }
+
+    return Ret::IGNORED;
 }
