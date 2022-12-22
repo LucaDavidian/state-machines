@@ -52,7 +52,7 @@ void HSM::Init(const Event *event)
             (*rit)->OnEntry(this);
 
         initialSourceState = mCurrentState;    // the source of the new initial transition is the current state
-    } while (mCurrentState->OnInitial(this));  // trigger the new initila transition. if leaf state exit loop
+    } while (mCurrentState->OnInitial(this));  // trigger the new initial transition. if leaf state exit loop
 }
 
 void HSM::Dispatch(const Event *event)
