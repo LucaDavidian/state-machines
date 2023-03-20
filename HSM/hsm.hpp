@@ -74,8 +74,6 @@ private:
     HFSMState *mInitialState = nullptr;
 };
 
-
-
 class HFSM
 {
 public:
@@ -118,27 +116,28 @@ public:
 
         for (auto it : mStates)
             if (it.second == mCurrentState)
-                return it.first;
+            {
+                result = it.first;
+                break;
+            }
 
         return result;
     }
 
     void Init()
     {
-        HFSMState *initialState = nullptr;
-
         for (auto statePair : mStates)
             if (!statePair.second->GetParent())
             {
-                initialState = statePair.second;
+                mCurrentState = statePair.second;
                 break;
             }
 
-        assert(initialState);
+        assert(mCurrentState);
 
-        mCurrentState = initialState;
         mCurrentState->OnEnter();
 
+        // enter initial state configuration
         while (mCurrentState->GetInitialState())
         {
             mCurrentState = mCurrentState->GetInitialState();
@@ -168,8 +167,8 @@ private:
 
         while (mainSourceAncestor)
         {
-            //HFSMState *mainTargetAncestor = mainTargetState->GetParent();
             HFSMState *mainTargetAncestor = mainTargetState;
+            //HFSMState *mainTargetAncestor = mainTargetState->GetParent();
 
             while (mainTargetAncestor && mainSourceAncestor != mainTargetAncestor)
                 mainTargetAncestor = mainTargetAncestor->GetParent();
