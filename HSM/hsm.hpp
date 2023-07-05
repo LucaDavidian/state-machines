@@ -200,8 +200,8 @@ private:
         while (!targetStateConfiguration.Empty())
         {
             mCurrentState = targetStateConfiguration.Top();
-            targetStateConfiguration.Pop();
             mCurrentState->OnEnter();
+            targetStateConfiguration.Pop();
         }
     }
 };
