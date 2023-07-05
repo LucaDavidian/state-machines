@@ -3,34 +3,9 @@
 
 #include <cstdint>
 #include <map>
-#include <type_traits>
 #include <string>
-#include <vector>
 #include <cassert>
 #include "../../data structures/ADT/Stack/Stack.hpp"
-
-// using StateId = uint8_t;
-
-// namespace Details 
-// {
-//     StateId GetUniqueId()
-//     {
-//         static StateId stateId = 0U;
-
-//         return stateId++;
-//     }
-
-//     template <typename T>
-//     StateId GetStateId()
-//     {
-//         static StateId stateId = GetUniqueId();
-
-//         return stateId;
-//     }
-
-// }   // namespace Details
-
-
 
 class HFSMState
 {
@@ -76,26 +51,7 @@ private:
 
 class HFSM
 {
-public:
-    // template <typename S>
-    // void AddState()
-    // {
-    //     static_assert(std::is_base_of<HFSMState, S>::value);   
-                                                              
-    //     mStates.insert({Details::GetStateId<S>(), new S});    
-    // } 
-
-    // template <typename S>
-    // void ChangeState()
-    // {
-    //     if (auto it = mStates.find(Details::GetStateId<S>()); it != mStates.end())
-    //     {
-    //         HFSMState *mainTargetState = it->second;  // get target state configuration
-
-            
-    //     }
-    // }                                                       
-                                                             
+public:                                                                                                 
     void AddState(const std::string &stateName, HFSMState *state)  // or create state object with reflection and store in
     {                                                              // std::map<std::string, State*>
         mStates.insert(std::make_pair(stateName, state));           
@@ -112,36 +68,70 @@ public:
 
     std::string GetCurrentStateName() const
     {
-        std::string result;
+        // std::string result;
 
-        for (auto it : mStates)
-            if (it.second == mCurrentState)
-            {
-                result = it.first;
-                break;
-            }
+        // for (auto statePair : mStates)
+        //     if (statePair.second == mCurrentState)
+        //     {
+        //         result = statePair.first;
+        //         break;
+        //     }
 
-        return result;
+        // return result;
+
+        // C++17 structured bindings
+        for (auto const &[stateName, state] : mStates)
+            if (state == mCurrentState)
+                return stateName;
+
+        return "";
     }
 
     void Init()
     {
-        for (auto statePair : mStates)
-            if (!statePair.second->GetParent())
+        HFSMState *rootState = nullptr;
+
+        // 1. find the root state (single enclosing state without parent)
+
+        // C++17 structured bindings
+        for (auto [stateName, state] : mStates)
+            if (!state->GetParent())
             {
-                mCurrentState = statePair.second;
+                rootState = state;
                 break;
             }
 
-        assert(mCurrentState);
+        // for (auto statePair : mStates)
+        //     if (!statePair.second->GetParent())
+        //     {
+        //         rootState = statePair.second;
+        //         break;
+        //     }
 
-        mCurrentState->OnEnter();
+        assert(rootState);
 
-        // enter initial state configuration
-        while (mCurrentState->GetInitialState())
+        // 2. enter root state
+
+        rootState->OnEnter();
+
+        // 3. enter initial state configuration
+        Stack<HFSMState*> targetStateConfiguration;
+        HFSMState *state = rootState;
+
+        while (state->GetInitialState())   // find target leaf state
+            state = state->GetInitialState();
+            
+        while (state != rootState)   // save states from target leaf to root state excluded
         {
-            mCurrentState = mCurrentState->GetInitialState();
+            targetStateConfiguration.Push(state);
+            state = state->GetParent();
+        }
+
+        while (!targetStateConfiguration.Empty())
+        {
+            mCurrentState = targetStateConfiguration.Top();
             mCurrentState->OnEnter();
+            targetStateConfiguration.Pop();
         }
     }
 
@@ -151,9 +141,7 @@ public:
     }
 
 private:
-    //std::map<StateId, HFSMState*> mStates;
     std::map<std::string, HFSMState*> mStates;  // state-transition table
-
     HFSMState *mCurrentState = nullptr;
 
     void Transition(HFSMState *mainSourceState, HFSMState *mainTargetState)

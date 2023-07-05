@@ -1,7 +1,7 @@
 #include "hsm.hpp"
 #include <iostream>
 
-char c;
+char c{};
 
 class S0 : public HFSMState
 {
@@ -109,12 +109,12 @@ int main(int argc, char *argv[])
 {
     HFSM stateMachine;
 
-    S211 s211(&stateMachine);
+    S0 s0(&stateMachine);
+    S1 s1(&stateMachine);
+    S2 s2(&stateMachine);
     S11 s11(&stateMachine);
     S21 s21(&stateMachine);
-    S2 s2(&stateMachine);
-    S1 s1(&stateMachine);
-    S0 s0(&stateMachine);
+    S211 s211(&stateMachine);
     
     s0.SetInitialState(&s1);
     s1.SetInitialState(&s11);
@@ -137,11 +137,12 @@ int main(int argc, char *argv[])
     stateMachine.Init();
 
     extern char c;
-    while (std::cin >> c)
+
+    do
     {
         stateMachine.Update(0.1f);
         std::cout << "current state: " << stateMachine.GetCurrentStateName() << std::endl;
-    }
+    } while (std::cin >> c);
 
     //std::cout << "transition s1 --> s21" << std::endl;
     //stateMachine.ChangeState(&s1, "S21");
